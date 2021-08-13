@@ -2,11 +2,12 @@
 
 import json
 
+
 class Vaers(object):
     def __init__(self, dataf, symptomsf, vaxf):
-        #self.data = json.load(open(dataf, encoding='latin1'))
-        #self.symptoms = json.load(open(symptomsf, encoding='latin1'))
-        self.vax = json.load(open(vaxf, encoding='latin1'))
+        # self.data = json.load(open(dataf, encoding='latin1'))
+        # self.symptoms = json.load(open(symptomsf, encoding='latin1'))
+        self.vax = json.load(open(vaxf, encoding="latin1"))
 
 
 def count_key(src, key, match=None):
@@ -19,23 +20,28 @@ def count_key(src, key, match=None):
         total += 1
         count[val] = count.get(val, 0) + 1
     for k, v in sorted(count.items(), key=lambda x: x[1]):
-        print(f'{k}: {v} ({100*v/total:.2f}%)')
+        print(f"{k}: {v} ({100*v/total:.2f}%)")
     print()
-    print(f'Total: {total}')
+    print(f"Total: {total}")
+
 
 def print_fully_vaxed():
-    print("""https://covid.cdc.gov/covid-data-tracker/#vaccinations_vacc-total-admin-rate-total
+    print(
+        """https://covid.cdc.gov/covid-data-tracker/#vaccinations_vacc-total-admin-rate-total
 13aug2021
 Unknown2dose 94606 (0.05%)
 Janssen 13634118 (8.13%)
 Moderna 64113369 (38.23%)
 Pfizer 89857077 (53.58%)
 Total 167699170
-""")
+"""
+    )
+
 
 def main():
-    vaers = Vaers('2021VAERSDATA.json', '2021VAERSSYMPTOMS.json', '2021VAERSVAX.json')
-    count_key(vaers.vax, 'VAX_NAME', match="COVID")
+    vaers = Vaers("2021VAERSDATA.json", "2021VAERSSYMPTOMS.json", "2021VAERSVAX.json")
+    count_key(vaers.vax, "VAX_NAME", match="COVID")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()
