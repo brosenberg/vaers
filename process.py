@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 
+import sys
 import json
 
 
 SYMPTOMS = ["SYMPTOM1", "SYMPTOM2", "SYMPTOM3", "SYMPTOM4", "SYMPTOM5"]
+FILES = ("VAERSDATA.json", "VAERSSYMPTOMS.json", "VAERSVAX.json")
 
 
 class Vaers(object):
-    def __init__(self, dataf, symptomsf, vaxf):
-        self.data = json.load(open(dataf, encoding="latin1"))
-        self.symptoms = json.load(open(symptomsf, encoding="latin1"))
-        self.vax = json.load(open(vaxf, encoding="latin1"))
+    def __init__(self, files):
+        self.data = json.load(open(files[0], encoding="latin1"))
+        self.symptoms = json.load(open(files[1], encoding="latin1"))
+        self.vax = json.load(open(files[2], encoding="latin1"))
 
     def print_vaccine_types(self, ids):
         vaccines = {}
@@ -23,7 +25,7 @@ class Vaers(object):
         print()
         print(f"Total: {total}")
 
-    def vax_symptoms(self):
+    def vax_symptoms(self, min_lim=25):
         vaxes = {}
         for vid in self.vax:
             vax = self.vax[vid]["VAX_NAME"]
@@ -39,19 +41,19 @@ class Vaers(object):
         for vax in vaxes:
             print(vax)
             for k, v in sorted(vaxes[vax].items(), key=lambda x: x[1], reverse=True):
-                print(f"{k}: {v}")
+                if v >= min_lim:
+                    print(f"{k}: {v}")
             print()
 
-    def inapp_age(self):
+    def get_symptom_texts(self, text='inappropriate age'):
         for vid in self.symptoms:
             for symptom in SYMPTOMS:
-                if "inappropriate age" in self.symptoms[vid][symptom]:
+                if text in self.symptoms[vid][symptom]:
                     try:
-                        text = self.data[vid]["SYMPTOM_TEXT"]
-                        age = self.data[vid]["AGE_YRS"]
+                        print(f"{self.data[vid]['SYMPTOM_TEXT']}")
                     except KeyError:
                         print(f"{vid} not in Data DB")
-                    print(f"{vid} (age:{age}): {text}")
+                    print()
 
 
 def find_keys_ret_id(src, keys, match):
@@ -118,9 +120,13 @@ def vaccine_counts(vaers):
 
 
 def main():
-    vaers = Vaers("2021VAERSDATA.json", "2021VAERSSYMPTOMS.json", "2021VAERSVAX.json")
-    vaers.inapp_age()
-
+    try:
+        year = sys.argv[1]
+    except IndexError:
+        year = '2021'
+    vaers = Vaers([year + x for x in FILES])
+    vaers.vax_symptoms()
+    #vaers.get_symptom_texts('uphoric mood')
 
 if __name__ == "__main__":
     main()

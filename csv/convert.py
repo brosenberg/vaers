@@ -27,9 +27,9 @@ def make_json(base_path, key="VAERS_ID"):
 
 
 def main():
-    make_json("2021VAERSDATA")
-    make_json("2021VAERSSYMPTOMS")
-    make_json("2021VAERSVAX")
+    make_json("2019VAERSDATA")
+    make_json("2019VAERSSYMPTOMS")
+    make_json("2019VAERSVAX")
 
 
 if __name__ == "__main__":
