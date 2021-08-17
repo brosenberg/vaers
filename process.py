@@ -2,7 +2,10 @@
 
 import sys
 import json
+import matplotlib
+import matplotlib.pyplot
 
+from datetime import datetime
 
 SYMPTOMS = ["SYMPTOM1", "SYMPTOM2", "SYMPTOM3", "SYMPTOM4", "SYMPTOM5"]
 FILES = ("VAERSDATA.json", "VAERSSYMPTOMS.json", "VAERSVAX.json")
@@ -45,7 +48,7 @@ class Vaers(object):
                     print(f"{k}: {v}")
             print()
 
-    def get_symptom_texts(self, text='inappropriate age'):
+    def get_symptom_texts(self, text="inappropriate age"):
         for vid in self.symptoms:
             for symptom in SYMPTOMS:
                 if text in self.symptoms[vid][symptom]:
@@ -87,6 +90,11 @@ def count_key(src, key, match=None):
             continue
         total += 1
         count[val] = count.get(val, 0) + 1
+    return (count, total)
+
+
+def print_count_key(src, key, match=None):
+    count, total = count_key(src, key, match)
     for k, v in sorted(count.items(), key=lambda x: x[1]):
         print(f"{k}: {v} ({100*v/total:.2f}%)")
     print()
@@ -116,17 +124,30 @@ def find_strokes(vaers):
 
 
 def vaccine_counts(vaers):
-    count_key(vaers.vax, "VAX_NAME", match="COVID")
+    print_count_key(vaers.vax, "VAX_NAME", match="COVID")
+
+
+def graph_reports(vaers):
+    count = count_key(vaers.data, "RECVDATE")[0]
+    dates = matplotlib.dates.date2num(
+        [datetime.strptime(x, "%m/%d/%Y") for x in count.keys()]
+    )
+    values = list(count.values())
+    matplotlib.pyplot.plot_date(dates, values, ls="-")
+    matplotlib.pyplot.show()
 
 
 def main():
     try:
         year = sys.argv[1]
     except IndexError:
-        year = '2021'
+        year = "2021"
     vaers = Vaers([year + x for x in FILES])
-    vaers.vax_symptoms()
-    #vaers.get_symptom_texts('uphoric mood')
+    # vaers.vax_symptoms()
+    # vaers.get_symptom_texts('oetal death')
+    # vaccine_counts(vaers)
+    graph_reports(vaers)
+
 
 if __name__ == "__main__":
     main()
