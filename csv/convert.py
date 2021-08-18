@@ -27,7 +27,7 @@ def make_json(csv_file_path, key="VAERS_ID"):
     with open(json_file_path, "w", encoding="latin1") as jsonf:
         jsonf.write(json.dumps(data, indent=4))
 
-
+## TODO: Convert the symptoms into a list
 # def vaers_dump(data, symptoms, vax):
 #    def get_csv_handle(fh):
 #        return csv.DictReader(open(fname, encoding='latin1'))

@@ -28,7 +28,7 @@ class Vaers(object):
         print()
         print(f"Total: {total}")
 
-    def vax_symptoms(self, min_lim=25, filters=[]):
+    def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[]):
         vaxes = {}
         for vid in self.vax:
             vax = self.vax[vid]["VAX_NAME"]
@@ -45,13 +45,20 @@ class Vaers(object):
                 except KeyError:
                     print(f"{vid} is not present in the symptoms DB")
                     break
-        for vax in vaxes:
+        print(f"Symptoms occurence per vaccine. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: {', '.join(filters)}")
+        for vax in sorted(vaxes, key=lambda x: vaxes[x]["EVENTS"], reverse=True):
             print(f"{vax} - Count: {vaxes[vax]['EVENTS']}")
+            other = 0
             for k, v in sorted(vaxes[vax].items(), key=lambda x: x[1], reverse=True):
                 if k == "EVENTS":
                     continue
-                if v >= min_lim:
-                    print(f"{k}: {v} ({100*v/vaxes[vax]['EVENTS']:0.1f}%)")
+                pct = 100 * v / vaxes[vax]["EVENTS"]
+                if v >= min_lim and pct >= min_pct:
+                    print(f"{k}: {v} ({pct:0.1f}%)")
+                else:
+                    other += v
+            if other:
+                print(f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.1f}%): {other}")
             print()
 
     def get_symptom_texts(self, text="inappropriate age"):
