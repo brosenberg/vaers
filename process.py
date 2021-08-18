@@ -34,6 +34,7 @@ class Vaers(object):
             vax = self.vax[vid]["VAX_NAME"]
             if vax not in vaxes:
                 vaxes[vax] = {}
+            vaxes[vax]['EVENTS'] = vaxes[vax].get('EVENTS', 0) + 1
             for symptom in SYMPTOMS:
                 try:
                     if self.symptoms[vid][symptom]:
@@ -143,10 +144,10 @@ def main():
     except IndexError:
         year = "2021"
     vaers = Vaers([year + x for x in FILES])
-    # vaers.vax_symptoms()
+    vaers.vax_symptoms(min_lim=0)
     # vaers.get_symptom_texts('oetal death')
     # vaccine_counts(vaers)
-    graph_reports(vaers)
+    #graph_reports(vaers)
 
 
 if __name__ == "__main__":
