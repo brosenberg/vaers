@@ -28,25 +28,30 @@ class Vaers(object):
         print()
         print(f"Total: {total}")
 
-    def vax_symptoms(self, min_lim=25):
+    def vax_symptoms(self, min_lim=25, filters=[]):
         vaxes = {}
         for vid in self.vax:
             vax = self.vax[vid]["VAX_NAME"]
             if vax not in vaxes:
                 vaxes[vax] = {}
-            vaxes[vax]['EVENTS'] = vaxes[vax].get('EVENTS', 0) + 1
+            vaxes[vax]["EVENTS"] = vaxes[vax].get("EVENTS", 0) + 1
             for symptom in SYMPTOMS:
                 try:
                     if self.symptoms[vid][symptom]:
                         symp_fix = self.symptoms[vid][symptom].lower()
+                        if filters and symp_fix not in filters:
+                            continue
                         vaxes[vax][symp_fix] = vaxes[vax].get(symp_fix, 0) + 1
                 except KeyError:
                     print(f"{vid} is not present in the symptoms DB")
+                    break
         for vax in vaxes:
-            print(vax)
+            print(f"{vax} - Count: {vaxes[vax]['EVENTS']}")
             for k, v in sorted(vaxes[vax].items(), key=lambda x: x[1], reverse=True):
+                if k == "EVENTS":
+                    continue
                 if v >= min_lim:
-                    print(f"{k}: {v}")
+                    print(f"{k}: {v} ({100*v/vaxes[vax]['EVENTS']:0.1f}%)")
             print()
 
     def get_symptom_texts(self, text="inappropriate age"):
@@ -147,7 +152,7 @@ def main():
     vaers.vax_symptoms(min_lim=0)
     # vaers.get_symptom_texts('oetal death')
     # vaccine_counts(vaers)
-    #graph_reports(vaers)
+    # graph_reports(vaers)
 
 
 if __name__ == "__main__":
