@@ -45,7 +45,9 @@ class Vaers(object):
                 except KeyError:
                     print(f"{vid} is not present in the symptoms DB")
                     break
-        print(f"Symptoms occurence per vaccine. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: {', '.join(filters)}")
+        print(
+            f"Symptoms occurence per vaccine. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: {', '.join(filters)}"
+        )
         for vax in sorted(vaxes, key=lambda x: vaxes[x]["EVENTS"], reverse=True):
             print(f"{vax} - Count: {vaxes[vax]['EVENTS']}")
             other = 0
@@ -58,7 +60,9 @@ class Vaers(object):
                 else:
                     other += v
             if other:
-                print(f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.1f}%): {other}")
+                print(
+                    f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.1f}%): {other}"
+                )
             print()
 
     def get_symptom_texts(self, text="inappropriate age"):
@@ -118,11 +122,18 @@ def print_fully_vaxed():
     print(
         """https://covid.cdc.gov/covid-data-tracker/#vaccinations_vacc-total-admin-rate-total
 13aug2021
-Unknown2dose 94606 (0.05%)
+Unknown2dose 94606 (0.06%)
 Janssen 13634118 (8.13%)
 Moderna 64113369 (38.23%)
 Pfizer 89857077 (53.58%)
 Total 167699170
+
+20aug2021
+Unknown2dose 93910 (0.06%)
+Janssen 13849390 (8.17%)
+Moderna 64487327 (38.02%)
+Pfizer 91162246 (53.75%)
+Total 169592873
 """
     )
 
@@ -156,7 +167,7 @@ def main():
     except IndexError:
         year = "2021"
     vaers = Vaers([year + x for x in FILES])
-    vaers.vax_symptoms(min_lim=0)
+    vaers.vax_symptoms(min_lim=25, min_pct=0)
     # vaers.get_symptom_texts('oetal death')
     # vaccine_counts(vaers)
     # graph_reports(vaers)
