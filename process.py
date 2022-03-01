@@ -183,31 +183,8 @@ def print_count_key(src, key, match=None):
 
 def print_fully_vaxed():
     print(
-        """https://covid.cdc.gov/covid-data-tracker/#vaccinations_vacc-total-admin-rate-total
-13aug2021
-Unknown2dose 94606 (0.06%)
-Janssen 13634118 (8.13%)
-Moderna 64113369 (38.23%)
-Pfizer 89857077 (53.58%)
-Total 167699170
-
-20aug2021
-Unknown2dose 93910 (0.06%)
-Janssen 13849390 (8.17%)
-Moderna 64487327 (38.02%)
-Pfizer 91162246 (53.75%)
-Total 169592873
-"""
+        "https://covid.cdc.gov/covid-data-tracker/#vaccinations_vacc-total-admin-rate-total"
     )
-
-
-def find_strokes(vaers):
-    stroke_ids = find_keys_ret_id(
-        vaers.symptoms,
-        SYMPTOMS,
-        "stroke",
-    )
-    vaers.print_vaccine_types(stroke_ids)
 
 
 def graph_reports(vaers):
