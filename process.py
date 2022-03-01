@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
-import sys
+import argparse
 import json
+import sys
 
+from datetime import date
 from datetime import datetime
 
 
@@ -57,14 +59,11 @@ class Vaers(object):
             print()
 
     def get_symptom_texts(self, text="inappropriate age"):
+        symptoms = {}
         for vid in self.data:
-            for symptom in SYMPTOMS:
-                if text in self.data[vid][symptom]:
-                    try:
-                        print(f"{self.data[vid]['SYMPTOM_TEXT']}")
-                    except KeyError:
-                        print(f"{vid} not in Data DB")
-                    print()
+            for symptom in self.data[vid]["SYMPTOMS"]:
+                if text in symptom:
+                    print(symptom)
 
 
 def find_keys_ret_id(src, keys, match):
@@ -139,7 +138,7 @@ def find_strokes(vaers):
 
 
 def vaccine_counts(vaers):
-    print_count_key(vaers.vax, "VAX_NAME", match="COVID")
+    print_count_key(vaers.data, "VAX_NAME", match="COVID")
 
 
 def graph_reports(vaers):
@@ -156,23 +155,61 @@ def graph_reports(vaers):
 
 
 def main():
-    try:
-        year = sys.argv[1]
-    except IndexError:
-        year = "2022"
-    # vaers = Vaers([year + x for x in FILES])
-    vaers = Vaers(year)
-    vaers.vax_symptoms(
-        min_lim=25,
-        min_pct=0,
-        dedupe={
-            "sars-cov-2 test positive": "covid-19",
-            "covid-19 pneumonia": "covid-19",
-        },
+    parser = argparse.ArgumentParser(description="Process VAERS data")
+    parser.add_argument(
+        "-c",
+        "--count",
+        default=False,
+        action="store_true",
+        help="print COVID-19 vaccine counts",
     )
-    # vaers.get_symptom_texts('oetal death')
-    # vaccine_counts(vaers)
-    # graph_reports(vaers)
+    parser.add_argument(
+        "-g",
+        "--graph",
+        default=False,
+        action="store_true",
+        help="graph number of VAERS reports",
+    )
+    parser.add_argument(
+        "-s",
+        "--symptoms",
+        default=False,
+        action="store_true",
+        help="print reported symptoms for each vaccine",
+    )
+    parser.add_argument(
+        "-t",
+        "--text",
+        default=None,
+        action="store",
+        help="print symptoms that contain TEXT",
+    )
+    parser.add_argument(
+        "-y",
+        "--year",
+        default=date.today().year,
+        action="store",
+        help="year of data file to use",
+    )
+
+    args = parser.parse_args()
+    vaers = Vaers(args.year)
+
+    if args.count:
+        vaccine_counts(vaers)
+    if args.graph:
+        graph_reports(vaers)
+    if args.symptoms:
+        vaers.vax_symptoms(
+            min_lim=25,
+            min_pct=0,
+            dedupe={
+                "sars-cov-2 test positive": "covid-19",
+                "covid-19 pneumonia": "covid-19",
+            },
+        )
+    if args.text:
+        vaers.get_symptom_texts(args.text)
 
 
 if __name__ == "__main__":
