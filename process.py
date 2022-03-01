@@ -37,6 +37,37 @@ class Vaers(object):
         print_count_key(self.data, "VAX_NAME", match=self.vax)
         print("-" * 80)
 
+    def vax_lots(self):
+        vaxes = {}
+        for vid in self.data:
+            vax = self.data[vid]["VAX_NAME"]
+            if self.vax and self.vax.lower() not in vax.lower():
+                continue
+            if vax not in vaxes:
+                vaxes[vax] = {"Lots": {}, "Total": 0}
+            lot = self.data[vid]["VAX_LOT"]
+            if lot not in vaxes[vax]["Lots"]:
+                vaxes[vax]["Lots"][lot] = 0
+            vaxes[vax]["Lots"][lot] += 1
+            vaxes[vax]["Total"] += 1
+        print("-" * 80)
+        header = "Vaccine lots"
+        if self.vax:
+            header += f" for vaccines matching '{self.vax}'"
+        header += f" for {self.year} data."
+        print(header)
+        print()
+        for vax in vaxes:
+            print(f"{vax}:")
+            for lot in sorted(
+                vaxes[vax]["Lots"], key=lambda x: vaxes[vax]["Lots"][x], reverse=True
+            ):
+                pct = vaxes[vax]["Lots"][lot] / vaxes[vax]["Total"] * 100
+                print(f"  {lot}: {vaxes[vax]['Lots'][lot]} ({pct:.2f}%)")
+            print(f"Total: {vaxes[vax]['Total']}")
+            print()
+        print("-" * 80)
+
     def vax_deaths(self):
         vaxes = {}
         total = 0
@@ -57,7 +88,7 @@ class Vaers(object):
         print(header)
         print()
         for vax in sorted(vaxes, key=lambda x: vaxes[x]["Deaths"], reverse=True):
-            pct = vaxes[vax]["Deaths"] / vaxes[vax]["Total"]
+            pct = vaxes[vax]["Deaths"] / vaxes[vax]["Total"] * 100
             print(f"{vax}: {vaxes[vax]['Deaths']} ({pct:0.2f}%)")
             total += vaxes[vax]["Deaths"]
         print()
@@ -226,6 +257,13 @@ def main():
         help="graph number of VAERS reports",
     )
     output_group.add_argument(
+        "-l",
+        "--lots",
+        default=False,
+        action="store_true",
+        help="print vaccine lots",
+    )
+    output_group.add_argument(
         "-s",
         "--symptoms",
         default=False,
@@ -277,6 +315,8 @@ def main():
         vaers.vax_deaths()
     if args.graph:
         graph_reports(vaers)
+    if args.lots:
+        vaers.vax_lots()
     if args.symptoms:
         vaers.vax_symptoms(
             min_lim=25,
