@@ -2,15 +2,14 @@
 
 import sys
 import json
-import matplotlib
-import matplotlib.pyplot
 
 from datetime import datetime
 
 
 class Vaers(object):
-    def __init__(self, data):
-        self.data = json.load(open(data, encoding="latin1"))
+    def __init__(self, year):
+        self.data = json.load(open(str(year) + "VAERS.json", encoding="latin1"))
+        self.year = year
 
     def print_vaccine_types(self, ids):
         vaccines = {}
@@ -23,7 +22,7 @@ class Vaers(object):
         print()
         print(f"Total: {total}")
 
-    def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[]):
+    def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[], dedupe={}):
         vaxes = {}
         for vid in self.data:
             vax = self.data[vid]["VAX_NAME"]
@@ -34,9 +33,11 @@ class Vaers(object):
                 symptom = symptom.lower()
                 if filters and symptom not in filters:
                     continue
+                if symptom in dedupe:
+                    symptom = dedupe[symptom]
                 vaxes[vax][symptom] = vaxes[vax].get(symptom, 0) + 1
         print(
-            f"Symptoms occurence per vaccine. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: {', '.join(filters)}"
+            f"Symptoms occurence per vaccine for {self.year} data. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: [{', '.join(filters)}]  Dedupe: {dedupe}"
         )
         for vax in sorted(vaxes, key=lambda x: vaxes[x]["EVENTS"], reverse=True):
             print(f"{vax} - Count: {vaxes[vax]['EVENTS']}")
@@ -142,6 +143,9 @@ def vaccine_counts(vaers):
 
 
 def graph_reports(vaers):
+    import matplotlib
+    import matplotlib.pyplot
+
     count = count_key(vaers.data, "RECVDATE")[0]
     dates = matplotlib.dates.date2num(
         [datetime.strptime(x, "%m/%d/%Y") for x in count.keys()]
@@ -157,8 +161,15 @@ def main():
     except IndexError:
         year = "2022"
     # vaers = Vaers([year + x for x in FILES])
-    vaers = Vaers(year + "VAERS.json")
-    vaers.vax_symptoms(min_lim=25, min_pct=0)
+    vaers = Vaers(year)
+    vaers.vax_symptoms(
+        min_lim=25,
+        min_pct=0,
+        dedupe={
+            "sars-cov-2 test positive": "covid-19",
+            "covid-19 pneumonia": "covid-19",
+        },
+    )
     # vaers.get_symptom_texts('oetal death')
     # vaccine_counts(vaers)
     # graph_reports(vaers)

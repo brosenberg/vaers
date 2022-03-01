@@ -78,7 +78,7 @@ def vaers_dump(data_fname, symptoms_fname, vax_fname):
 
 
 def main():
-    vaers_dump("2022VAERSDATA.csv", "2022VAERSSYMPTOMS.csv", "2022VAERSVAX.csv")
+    vaers_dump("2021VAERSDATA.csv", "2021VAERSSYMPTOMS.csv", "2021VAERSVAX.csv")
     for fname in sys.argv[1:]:
         make_json(fname)
 
