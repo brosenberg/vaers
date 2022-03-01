@@ -7,21 +7,16 @@ import matplotlib.pyplot
 
 from datetime import datetime
 
-SYMPTOMS = ["SYMPTOM1", "SYMPTOM2", "SYMPTOM3", "SYMPTOM4", "SYMPTOM5"]
-FILES = ("VAERSDATA.json", "VAERSSYMPTOMS.json", "VAERSVAX.json")
-
 
 class Vaers(object):
-    def __init__(self, files):
-        self.data = json.load(open(files[0], encoding="latin1"))
-        self.symptoms = json.load(open(files[1], encoding="latin1"))
-        self.vax = json.load(open(files[2], encoding="latin1"))
+    def __init__(self, data):
+        self.data = json.load(open(data, encoding="latin1"))
 
     def print_vaccine_types(self, ids):
         vaccines = {}
         total = len(ids)
         for i in ids:
-            vaccine = self.vax[i]["VAX_NAME"]
+            vaccine = self.data[i]["VAX_NAME"]
             vaccines[vaccine] = vaccines.get(vaccine, 0) + 1
         for k, v in sorted(vaccines.items(), key=lambda x: x[1]):
             print(f"{k}: {v} ({100*v/total:.2f}%)")
@@ -30,21 +25,16 @@ class Vaers(object):
 
     def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[]):
         vaxes = {}
-        for vid in self.vax:
-            vax = self.vax[vid]["VAX_NAME"]
+        for vid in self.data:
+            vax = self.data[vid]["VAX_NAME"]
             if vax not in vaxes:
                 vaxes[vax] = {}
             vaxes[vax]["EVENTS"] = vaxes[vax].get("EVENTS", 0) + 1
-            for symptom in SYMPTOMS:
-                try:
-                    if self.symptoms[vid][symptom]:
-                        symp_fix = self.symptoms[vid][symptom].lower()
-                        if filters and symp_fix not in filters:
-                            continue
-                        vaxes[vax][symp_fix] = vaxes[vax].get(symp_fix, 0) + 1
-                except KeyError:
-                    print(f"{vid} is not present in the symptoms DB")
-                    break
+            for symptom in self.data[vid]["SYMPTOMS"]:
+                symptom = symptom.lower()
+                if filters and symptom not in filters:
+                    continue
+                vaxes[vax][symptom] = vaxes[vax].get(symptom, 0) + 1
         print(
             f"Symptoms occurence per vaccine. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: {', '.join(filters)}"
         )
@@ -66,9 +56,9 @@ class Vaers(object):
             print()
 
     def get_symptom_texts(self, text="inappropriate age"):
-        for vid in self.symptoms:
+        for vid in self.data:
             for symptom in SYMPTOMS:
-                if text in self.symptoms[vid][symptom]:
+                if text in self.data[vid][symptom]:
                     try:
                         print(f"{self.data[vid]['SYMPTOM_TEXT']}")
                     except KeyError:
@@ -165,8 +155,9 @@ def main():
     try:
         year = sys.argv[1]
     except IndexError:
-        year = "2021"
-    vaers = Vaers([year + x for x in FILES])
+        year = "2022"
+    # vaers = Vaers([year + x for x in FILES])
+    vaers = Vaers(year + "VAERS.json")
     vaers.vax_symptoms(min_lim=25, min_pct=0)
     # vaers.get_symptom_texts('oetal death')
     # vaccine_counts(vaers)
