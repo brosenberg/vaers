@@ -155,36 +155,44 @@ def graph_reports(vaers):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Process VAERS data")
-    parser.add_argument(
+    output_parser = argparse.ArgumentParser(add_help=False)
+    output_group = output_parser.add_argument_group("output arguments")
+
+    output_group.add_argument(
         "-c",
         "--count",
         default=False,
         action="store_true",
         help="print COVID-19 vaccine counts",
     )
-    parser.add_argument(
+    output_group.add_argument(
         "-g",
         "--graph",
         default=False,
         action="store_true",
         help="graph number of VAERS reports",
     )
-    parser.add_argument(
+    output_group.add_argument(
         "-s",
         "--symptoms",
         default=False,
         action="store_true",
         help="print reported symptoms for each vaccine",
     )
-    parser.add_argument(
+    output_group.add_argument(
         "-t",
         "--text",
         default=None,
         action="store",
         help="print symptoms that contain TEXT",
     )
-    parser.add_argument(
+
+    all_parser = argparse.ArgumentParser(
+        parents=[output_parser],
+        description="Process VAERS data",
+        epilog="At least one output argument is required",
+    )
+    all_parser.add_argument(
         "-y",
         "--year",
         default=date.today().year,
@@ -192,7 +200,15 @@ def main():
         help="year of data file to use",
     )
 
-    args = parser.parse_args()
+    output_args, _ = output_parser.parse_known_args()
+    args = all_parser.parse_args()
+
+    # Skip loading data and processing if no output will be given
+    if len([x for x in vars(output_args).values() if x]) == 0:
+        print("An output argument is required.")
+        all_parser.print_help()
+        sys.exit(0)
+
     vaers = Vaers(args.year)
 
     if args.count:
