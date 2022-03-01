@@ -9,8 +9,9 @@ from datetime import datetime
 
 
 class Vaers(object):
-    def __init__(self, year):
+    def __init__(self, year, vax=None):
         self.data = json.load(open(str(year) + "VAERS.json", encoding="latin1"))
+        self.vax = vax
         self.year = year
 
     def print_vaccine_types(self, ids):
@@ -24,10 +25,24 @@ class Vaers(object):
         print()
         print(f"Total: {total}")
 
+    def vax_counts(self):
+        print("-" * 80)
+        if self.vax:
+            print(
+                f"Vaccine counts for vaccines matching '{self.vax}' for {self.year} data"
+            )
+        else:
+            print(f"Vaccine counts for {self.year} data")
+        print()
+        print_count_key(self.data, "VAX_NAME", match=self.vax)
+        print("-" * 80)
+
     def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[], dedupe={}):
         vaxes = {}
         for vid in self.data:
             vax = self.data[vid]["VAX_NAME"]
+            if self.vax and self.vax.lower() not in vax.lower():
+                continue
             if vax not in vaxes:
                 vaxes[vax] = {}
             vaxes[vax]["EVENTS"] = vaxes[vax].get("EVENTS", 0) + 1
@@ -38,9 +53,14 @@ class Vaers(object):
                 if symptom in dedupe:
                     symptom = dedupe[symptom]
                 vaxes[vax][symptom] = vaxes[vax].get(symptom, 0) + 1
-        print(
-            f"Symptoms occurence per vaccine for {self.year} data. Minimum symptom count: {min_lim}  Minimum percent: {min_pct}  Filters: [{', '.join(filters)}]  Dedupe: {dedupe}"
-        )
+        print("-" * 80)
+        header = "Symptoms occurence per vaccine"
+        if self.vax:
+            header += f" for vaccines matching '{self.vax}'"
+        header += f" for {self.year} data.\n"
+        header += f"Minimum symptom count: {min_lim}  Minimum percent: {min_pct:.1f}%  Filters: [{', '.join(filters)}]  Dedupe: {dedupe}"
+        print(header)
+        print()
         for vax in sorted(vaxes, key=lambda x: vaxes[x]["EVENTS"], reverse=True):
             print(f"{vax} - Count: {vaxes[vax]['EVENTS']}")
             other = 0
@@ -57,13 +77,39 @@ class Vaers(object):
                     f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.1f}%): {other}"
                 )
             print()
+        print("-" * 80)
 
     def get_symptom_texts(self, text="inappropriate age"):
         symptoms = {}
+        total = 0
         for vid in self.data:
             for symptom in self.data[vid]["SYMPTOMS"]:
-                if text in symptom:
-                    print(symptom)
+                if (
+                    self.vax is not None
+                    and self.vax.lower() not in self.data[vid]["VAX_NAME"].lower()
+                ):
+                    continue
+                if text.lower() in symptom.lower():
+                    if symptom in symptoms:
+                        symptoms[symptom] += 1
+                    else:
+                        symptoms[symptom] = 1
+        print("-" * 80)
+        if self.vax:
+            print(
+                f"Symptoms containing '{text}' reported for vaccines matching '{self.vax}' from {self.year} data"
+            )
+        else:
+            print(
+                f"Symptoms containing '{text}' reported for vaccines from {self.year} data"
+            )
+        print()
+        for symptom in sorted(symptoms, key=lambda x: symptoms[x], reverse=True):
+            print(f"{symptom}: {symptoms[symptom]}")
+            total += symptoms[symptom]
+        print()
+        print(f"Total: {total}")
+        print("-" * 80)
 
 
 def find_keys_ret_id(src, keys, match):
@@ -93,7 +139,7 @@ def count_key(src, key, match=None):
     total = 0
     for elem in src:
         val = src[elem][key]
-        if match is not None and match not in val:
+        if match is not None and match.lower() not in val.lower():
             continue
         total += 1
         count[val] = count.get(val, 0) + 1
@@ -102,7 +148,7 @@ def count_key(src, key, match=None):
 
 def print_count_key(src, key, match=None):
     count, total = count_key(src, key, match)
-    for k, v in sorted(count.items(), key=lambda x: x[1]):
+    for k, v in sorted(count.items(), reverse=True, key=lambda x: x[1]):
         print(f"{k}: {v} ({100*v/total:.2f}%)")
     print()
     print(f"Total: {total}")
@@ -135,10 +181,6 @@ def find_strokes(vaers):
         "stroke",
     )
     vaers.print_vaccine_types(stroke_ids)
-
-
-def vaccine_counts(vaers):
-    print_count_key(vaers.data, "VAX_NAME", match="COVID")
 
 
 def graph_reports(vaers):
@@ -193,6 +235,13 @@ def main():
         epilog="At least one output argument is required",
     )
     all_parser.add_argument(
+        "-v",
+        "--vaccine",
+        default=None,
+        action="store",
+        help="vaccine type",
+    )
+    all_parser.add_argument(
         "-y",
         "--year",
         default=date.today().year,
@@ -209,10 +258,10 @@ def main():
         all_parser.print_help()
         sys.exit(0)
 
-    vaers = Vaers(args.year)
+    vaers = Vaers(args.year, vax=args.vaccine)
 
     if args.count:
-        vaccine_counts(vaers)
+        vaers.vax_counts()
     if args.graph:
         graph_reports(vaers)
     if args.symptoms:
