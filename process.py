@@ -37,6 +37,33 @@ class Vaers(object):
         print_count_key(self.data, "VAX_NAME", match=self.vax)
         print("-" * 80)
 
+    def vax_deaths(self):
+        vaxes = {}
+        total = 0
+        for vid in self.data:
+            vax = self.data[vid]["VAX_NAME"]
+            if self.vax and self.vax.lower() not in vax.lower():
+                continue
+            if vax not in vaxes:
+                vaxes[vax] = {"Deaths": 0, "Total": 0}
+            vaxes[vax]["Total"] += 1
+            if self.data[vid]["DIED"] == "Y":
+                vaxes[vax]["Deaths"] += 1
+        print("-" * 80)
+        header = "Deaths per vaccine"
+        if self.vax:
+            header += f" for vaccines matching '{self.vax}'"
+        header += f" for {self.year} data."
+        print(header)
+        print()
+        for vax in sorted(vaxes, key=lambda x: vaxes[x]["Deaths"], reverse=True):
+            pct = vaxes[vax]["Deaths"] / vaxes[vax]["Total"]
+            print(f"{vax}: {vaxes[vax]['Deaths']} ({pct:0.2f}%)")
+            total += vaxes[vax]["Deaths"]
+        print()
+        print(f"Total deaths: {total}")
+        print("-" * 80)
+
     def vax_symptoms(self, min_lim=25, min_pct=1.0, filters=[], dedupe={}):
         vaxes = {}
         for vid in self.data:
@@ -58,7 +85,7 @@ class Vaers(object):
         if self.vax:
             header += f" for vaccines matching '{self.vax}'"
         header += f" for {self.year} data.\n"
-        header += f"Minimum symptom count: {min_lim}  Minimum percent: {min_pct:.1f}%  Filters: [{', '.join(filters)}]  Dedupe: {dedupe}"
+        header += f"Minimum symptom count: {min_lim}  Minimum percent: {min_pct:.2f}%  Filters: [{', '.join(filters)}]  Dedupe: {dedupe}"
         print(header)
         print()
         for vax in sorted(vaxes, key=lambda x: vaxes[x]["EVENTS"], reverse=True):
@@ -69,12 +96,12 @@ class Vaers(object):
                     continue
                 pct = 100 * v / vaxes[vax]["EVENTS"]
                 if v >= min_lim and pct >= min_pct:
-                    print(f"{k}: {v} ({pct:0.1f}%)")
+                    print(f"{k}: {v} ({pct:0.2f}%)")
                 else:
                     other += v
             if other:
                 print(
-                    f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.1f}%): {other}"
+                    f"Below Threshold (Min Count:{min_lim}  Min Percent:{min_pct:0.2f}%): {other}"
                 )
             print()
         print("-" * 80)
@@ -205,7 +232,14 @@ def main():
         "--count",
         default=False,
         action="store_true",
-        help="print COVID-19 vaccine counts",
+        help="print vaccine counts",
+    )
+    output_group.add_argument(
+        "-d",
+        "--deaths",
+        default=False,
+        action="store_true",
+        help="print vaccine deaths",
     )
     output_group.add_argument(
         "-g",
@@ -262,6 +296,8 @@ def main():
 
     if args.count:
         vaers.vax_counts()
+    if args.deaths:
+        vaers.vax_deaths()
     if args.graph:
         graph_reports(vaers)
     if args.symptoms:
