@@ -29,10 +29,11 @@ def make_json(csv_file_path, key="VAERS_ID"):
 
 
 # TODO: Convert the symptoms into a list
-def vaers_dump(data_fname, symptoms_fname, vax_fname):
+def vaers_dump(files):
     def get_csv_handle(fname):
         return csv.DictReader(open(fname, encoding="latin1"))
 
+    data_fname, symptoms_fname, vax_fname = files
     json_file_path = data_fname.replace("DATA.csv", ".json")
     if not json_file_path.endswith("json"):
         json_file_path += ".json"
@@ -78,9 +79,7 @@ def vaers_dump(data_fname, symptoms_fname, vax_fname):
 
 
 def main():
-    vaers_dump("2021VAERSDATA.csv", "2021VAERSSYMPTOMS.csv", "2021VAERSVAX.csv")
-    for fname in sys.argv[1:]:
-        make_json(fname)
+    vaers_dump(sys.argv[1:])
 
 
 if __name__ == "__main__":
