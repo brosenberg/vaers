@@ -318,14 +318,7 @@ def main():
     if args.lots:
         vaers.vax_lots()
     if args.symptoms:
-        vaers.vax_symptoms(
-            min_lim=25,
-            min_pct=0,
-            dedupe={
-                "sars-cov-2 test positive": "covid-19",
-                "covid-19 pneumonia": "covid-19",
-            },
-        )
+        vaers.vax_symptoms(min_lim=25, min_pct=0)
     if args.text:
         vaers.get_symptom_texts(args.text)
 
