@@ -170,28 +170,6 @@ class Vaers(object):
         print("-" * 80)
 
 
-def find_keys_ret_id(src, keys, match):
-    ids = []
-    match = match.lower()
-    for elem in src:
-        for key in keys:
-            if match in src[elem][key].lower():
-                ids.append(elem)
-    return ids
-
-
-def grep_key(src, key, match, display=False):
-    total = 0
-    match = match.lower()
-    for elem in src:
-        if match in src[elem][key].lower:
-            total += 1
-            if display:
-                print(src[elem][key])
-    print()
-    print(f"Total: {total}")
-
-
 def count_key(src, key, match=None):
     count = {}
     total = 0
